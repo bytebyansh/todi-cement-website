@@ -5,7 +5,7 @@
  */
 
 // Official TCS WhatsApp Contact
-const TCS_WHATSAPP_NUMBER = "919831023456";
+const TCS_WHATSAPP_NUMBER = "919460579100";
 
 // ============================================================
 // 1. BRAND DATA REPOSITORY (All 8 Brands Required by User)
@@ -285,7 +285,6 @@ function openBrandModal(brandKey) {
   const highContainer = document.getElementById("m-brand-highlights");
   highContainer.innerHTML = brand.highlights.map(h => `
     <div class="m-high-box">
-      <div class="m-high-icon">${h.icon}</div>
       <strong>${h.title}</strong>
       <span>${h.desc}</span>
     </div>
@@ -355,11 +354,11 @@ function generateStructuredWhatsAppQuote(event) {
   const structuredMessage = 
 `*ESTIMATE INQUIRY TO TODI CEMENT SALES (TCS)*
 ---------------------------------------------
-👤 *Client Name / City:* ${clientName}
-🏗️ *Project Scope:* ${projectType}
-📐 *Size / Layout:* ${areaSelect}
-✨ *Required Materials & Brands:*
-${selectedMaterials.map(m => ` • ${m}`).join("\n")}
+*Client Name / City:* ${clientName}
+*Project Scope:* ${projectType}
+*Size / Layout:* ${areaSelect}
+*Required Materials & Brands:*
+${selectedMaterials.map(m => `- ${m}`).join("\n")}
 ---------------------------------------------
 Please share itemized price estimates and product catalogs on WhatsApp. Thank you!`;
 
@@ -495,13 +494,13 @@ document.addEventListener("keydown", (e) => {
 // 8. REACHO-STYLE LIVE ACTIVITY NOTIFICATION TOAST
 // ============================================================
 const LIVE_INQUIRIES = [
-  "Ar. Sanchita Sen booked a site survey for Fenesta Windows",
+  "Ar. Sharma booked a site survey for Fenesta Windows in Bhilwara",
   "Mr. Rajesh Khemka confirmed Sleek Modular Kitchen layout",
   "Goenka Builders ordered 800 sq. ft. of Motto 1200x2400 slabs",
-  "Dr. A. Banerjee requested 12 Cera Rimless WCs quote",
-  "Villa project in New Town booked Franke Granite Sink delivery",
-  "Ballygunge Residence scheduled AO Smith geysers inspection",
-  "Metro Wood oak plank tiles samples dispatched to Park Street"
+  "Dr. A. Maheshwari requested 12 Cera Rimless WCs quote",
+  "Villa project in Shastri Nagar booked Franke Granite Sink delivery",
+  "Subhash Nagar Residence scheduled AO Smith geysers inspection",
+  "Metro Wood oak plank tiles samples dispatched across Bhilwara"
 ];
 
 let liveToastIndex = 0;
@@ -556,4 +555,162 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 4. Initialize department WhatsApp link
   updateWhatsAppLink();
+
+  // 5. Initialize Instagram Reels Carousel
+  initReelsCarousel();
 });
+
+// ============================================================
+// INSTAGRAM REELS CAROUSEL — Auto-sliding with infinite loop
+// ============================================================
+let reelsCurrentIndex = 0;
+let reelsAutoSlideTimer = null;
+let reelsTotalCards = 0;
+let reelsVisibleCards = 3;
+let reelsIsPaused = false;
+
+function initReelsCarousel() {
+  const track = document.getElementById('reels-track');
+  const container = document.getElementById('reels-track-container');
+  const dotsContainer = document.getElementById('reels-dots');
+  
+  if (!track || !container) return;
+
+  const cards = track.querySelectorAll('.reel-card');
+  reelsTotalCards = cards.length;
+  
+  if (reelsTotalCards === 0) return;
+
+  // Calculate visible cards based on viewport
+  updateReelsVisibleCount();
+
+  // Create dot navigation
+  const totalDots = Math.max(1, reelsTotalCards - reelsVisibleCards + 1);
+  dotsContainer.innerHTML = '';
+  for (let i = 0; i < totalDots; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'reels-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', `Go to reel set ${i + 1}`);
+    dot.onclick = () => goToReelIndex(i);
+    dotsContainer.appendChild(dot);
+  }
+
+  // Make each reel card clickable to open in Instagram
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      const url = card.getAttribute('data-reel-url');
+      if (url) window.open(url, '_blank', 'noopener');
+    });
+  });
+
+  // Pause auto-slide on hover
+  const wrapper = document.querySelector('.reels-carousel-wrapper');
+  if (wrapper) {
+    wrapper.addEventListener('mouseenter', () => { reelsIsPaused = true; });
+    wrapper.addEventListener('mouseleave', () => { reelsIsPaused = false; });
+  }
+
+  // Touch support for mobile swipe
+  let touchStartX = 0;
+  let touchEndX = 0;
+  container.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+    reelsIsPaused = true;
+  }, { passive: true });
+  container.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+      scrollReels(diff > 0 ? 1 : -1);
+    }
+    reelsIsPaused = false;
+  }, { passive: true });
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    updateReelsVisibleCount();
+    updateReelsDots();
+    moveReelsTrack();
+  });
+
+  // Start auto-slide
+  startReelsAutoSlide();
+
+  // Re-process Instagram embeds after a short delay
+  setTimeout(() => {
+    if (window.instgrm && window.instgrm.Embeds) {
+      window.instgrm.Embeds.process();
+    }
+  }, 2000);
+}
+
+function updateReelsVisibleCount() {
+  const containerWidth = document.getElementById('reels-track-container')?.offsetWidth || 800;
+  const cardWidth = window.innerWidth <= 480 ? 252 : (window.innerWidth <= 768 ? 280 : 320);
+  reelsVisibleCards = Math.max(1, Math.floor(containerWidth / cardWidth));
+}
+
+function startReelsAutoSlide() {
+  if (reelsAutoSlideTimer) clearInterval(reelsAutoSlideTimer);
+  reelsAutoSlideTimer = setInterval(() => {
+    if (!reelsIsPaused) {
+      const maxIndex = Math.max(0, reelsTotalCards - reelsVisibleCards);
+      if (reelsCurrentIndex >= maxIndex) {
+        reelsCurrentIndex = 0; // Loop back to the start
+      } else {
+        reelsCurrentIndex++;
+      }
+      moveReelsTrack();
+      updateReelsDots();
+    }
+  }, 3000);
+}
+
+function scrollReels(direction) {
+  const maxIndex = Math.max(0, reelsTotalCards - reelsVisibleCards);
+  reelsCurrentIndex += direction;
+  
+  if (reelsCurrentIndex > maxIndex) {
+    reelsCurrentIndex = 0; // Loop to start
+  } else if (reelsCurrentIndex < 0) {
+    reelsCurrentIndex = maxIndex; // Loop to end
+  }
+  
+  moveReelsTrack();
+  updateReelsDots();
+  
+  // Reset auto-slide timer on manual interaction
+  startReelsAutoSlide();
+}
+
+function goToReelIndex(index) {
+  reelsCurrentIndex = index;
+  moveReelsTrack();
+  updateReelsDots();
+  startReelsAutoSlide();
+}
+
+function moveReelsTrack() {
+  const track = document.getElementById('reels-track');
+  if (!track) return;
+  
+  const cards = track.querySelectorAll('.reel-card');
+  if (cards.length === 0) return;
+  
+  const card = cards[0];
+  const cardWidth = card.offsetWidth;
+  const gap = parseInt(getComputedStyle(track).gap) || 20;
+  const offset = reelsCurrentIndex * (cardWidth + gap);
+  
+  track.style.transform = `translateX(-${offset}px)`;
+}
+
+function updateReelsDots() {
+  const dotsContainer = document.getElementById('reels-dots');
+  if (!dotsContainer) return;
+  
+  const dots = dotsContainer.querySelectorAll('.reels-dot');
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('active', i === reelsCurrentIndex);
+  });
+}
