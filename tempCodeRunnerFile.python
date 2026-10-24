@@ -1,0 +1,73 @@
+
+def matrix_chain_order(p):
+    n = len(p) - 1
+
+    # m[i][j] stores minimum multiplication cost
+    m = [[0 for _ in range(n)] for _ in range(n)]
+
+    # s[i][j] stores optimal split position
+    s = [[0 for _ in range(n)] for _ in range(n)]
+
+    # Calculate minimum cost for each chain length
+    for length in range(2, n + 1):
+        for i in range(n - length + 1):
+            j = i + length - 1
+            m[i][j] = float('inf')
+
+            for k in range(i, j):
+                cost = (
+                    m[i][k]
+                    + m[k + 1][j]
+                    + p[i] * p[k + 1] * p[j + 1]
+                )
+
+                if cost < m[i][j]:
+                    m[i][j] = cost
+                    s[i][j] = k
+
+    return m, s
+
+
+def print_parenthesis(s, i, j):
+    if i == j:
+        return "A" + str(i + 1)
+
+    k = s[i][j]
+    left = print_parenthesis(s, i, k)
+    right = print_parenthesis(s, k + 1, j)
+
+    return "(" + left + " x " + right + ")"
+
+
+# Take user input
+n = int(input("Enter number of matrices: "))
+
+if n < 1:
+    print("Number of matrices must be at least 1.")
+else:
+    p = []
+
+    print("Enter the dimensions array.")
+    print("For", n, "matrices, enter", n + 1, "dimensions:")
+
+    for i in range(n + 1):
+        dimension = int(input(f"Enter dimension p[{i}]: "))
+        p.append(dimension)
+
+    if any(d <= 0 for d in p):
+        print("All dimensions must be positive integers.")
+    else:
+        m, s = matrix_chain_order(p)
+
+        print("\nMatrix Chain Multiplication")
+        print("---------------------------")
+        print("Dimensions:", p)
+        print("Number of matrices:", n)
+        print("Minimum scalar multiplications:", m[0][n - 1])
+
+        print("\nOptimal Parenthesization:")
+        print(print_parenthesis(s, 0, n - 1))
+
+        print("\nCost Table:")
+        for row in m:
+            print(row)
